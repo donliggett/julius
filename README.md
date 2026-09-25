@@ -98,3 +98,7 @@ And branches on the response:
 | [`STANDARD.md`](STANDARD.md) | The Julius Standard |
 | [`JULIUS.md`](JULIUS.md) | Entry template to copy into a project |
 | [`examples/`](examples/) | Worked examples |
+
+## License
+
+[MIT](LICENSE)
