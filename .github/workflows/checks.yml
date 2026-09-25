@@ -1,0 +1,24 @@
+name: checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Validator self-tests
+        run: python skills/add-julius/scripts/test_validate.py
+      - name: Worked example validates
+        run: python skills/add-julius/scripts/validate.py examples/support-inbox/JULIUS.md
+      - name: Conformance fixtures
+        run: python conformance/check_fixtures.py
+      - name: Skill copies in sync
+        run: python tools/sync_skill_copies.py --check

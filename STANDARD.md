@@ -224,8 +224,8 @@ Every response, success or failure, uses this shape. Projects must branch on `st
   "entry": "ops-agent",
   "set": "reflex-pretool",
   "set_hash": "a41f9c2e",
-  "provider": "typesafe",
-  "model": "jev-1.13",
+  "provider": "example-provider",
+  "model": "example-model-1",
   "calibrated": true,
   "answers": {
     "irreversible": { "p": 0.82 },

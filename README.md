@@ -107,6 +107,25 @@ python3 skills/add-julius/scripts/validate.py path/to/JULIUS.md
 
 The [conformance suite](conformance/) turns that checklist into test cases: requests, scripted replies from a mock provider, and the expected envelopes, logs, and provider calls. Write a small harness for your decider, run the cases, and fix what fails.
 
+## Known providers
+
+Models that return typed, calibrated decisions a decider adapter can map to Julius question types. This list is for discoverability; being on it isn't an endorsement.
+
+| Provider | Model | Notes |
+| --- | --- | --- |
+| [TypeSafe AI](https://typesafe.ai/) | Jev | Calibrated typed decisions for classification, routing, scoring, and branching. [Docs](https://docs.typesafe.ai/) |
+
+To add a provider, open a pull request.
+
+## Open questions for v0.2
+
+- **Model identity:** how model ids are formed and namespaced, pinned ids versus aliases, and what happens when a model is retired or no provider serves it.
+- **Fallback models:** one pinned model per entry, or an ordered list, and what that means for calibration and thresholds.
+- **`bands_hash`:** an optional hash of a set's band rules, logged next to `set_hash`, so every band label can be traced to the rules that produced it.
+- **HTTP test runner:** running the conformance suite against a deployed decider, not only through an in-process harness.
+
+Feedback is welcome in issues.
+
 ## Repository layout
 
 | Path | Contents |

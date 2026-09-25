@@ -39,9 +39,9 @@ Content-Type: application/json
   "julius": "0.1",
   "entry": "larkspur-support",
   "set": "triage",
-  "set_hash": "1d741c4f",
-  "provider": "typesafe",
-  "model": "jev-1.13",
+  "set_hash": "877f67e9",
+  "provider": "example-provider",
+  "model": "example-model-1",
   "calibrated": true,
   "answers": {
     "topic": {
@@ -94,9 +94,9 @@ The customer has two recent orders, so the inbox sends them as `params.orders` a
   "julius": "0.1",
   "entry": "larkspur-support",
   "set": "order-match",
-  "set_hash": "daf5fc7e",
-  "provider": "typesafe",
-  "model": "jev-1.13",
+  "set_hash": "0b7d6020",
+  "provider": "example-provider",
+  "model": "example-model-1",
   "calibrated": true,
   "answers": {
     "is_about.a1042": { "p": 0.93 },

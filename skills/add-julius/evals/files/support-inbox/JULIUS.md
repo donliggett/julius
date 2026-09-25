@@ -42,7 +42,7 @@ Computed facts (counts, distances, dates, arithmetic) are calculated in code and
 julius: "0.1"
 entry: larkspur-support
 access: private
-model: jev-1.13
+model: example-model-1
 accept_uncalibrated: false
 log: answers
 retention_days: 30
@@ -96,4 +96,4 @@ examples: julius.examples.yaml
 
 | Date | Change | New `set_hash` |
 | --- | --- | --- |
-| 2026-01-15 | Initial entry | `triage` `1d741c4f`, `order-match` `daf5fc7e` |
+| 2026-01-15 | Initial entry | `triage` `877f67e9`, `order-match` `0b7d6020` |
