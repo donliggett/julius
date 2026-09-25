@@ -1,0 +1,137 @@
+{
+  "suite": "julius-conformance",
+  "julius": "0.1",
+  "group": "budget",
+  "cases": [
+    {
+      "id": "budget-exhausted",
+      "section": "4",
+      "description": "Spend for the day has reached daily_usd, so the call is refused.",
+      "setup": {
+        "spent_usd": {
+          "conf-budget": 0.5
+        }
+      },
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-budget"
+            },
+            "body": {
+              "entry": "conf-budget",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "over_budget",
+              "julius": "0.1",
+              "reason": "entry_budget",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-budget",
+              "set": "check"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "budget-last-call-may-overshoot",
+      "section": "4",
+      "description": "A call made under the limit may take spend past it; the next call is refused.",
+      "setup": {
+        "spent_usd": {
+          "conf-budget": 0.25
+        }
+      },
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-budget"
+            },
+            "body": {
+              "entry": "conf-budget",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.8
+                }
+              },
+              "cost_usd": 0.5
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok"
+            },
+            "provider_calls": 1
+          }
+        },
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-budget"
+            },
+            "body": {
+              "entry": "conf-budget",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "over_budget",
+              "julius": "0.1",
+              "reason": "entry_budget",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              }
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    }
+  ]
+}

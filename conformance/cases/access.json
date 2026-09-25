@@ -1,0 +1,309 @@
+{
+  "suite": "julius-conformance",
+  "julius": "0.1",
+  "group": "access",
+  "cases": [
+    {
+      "id": "public-allowed-origin",
+      "section": "4",
+      "description": "A public entry needs no key when the Origin is allowed.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Origin": "https://app.example"
+            },
+            "body": {
+              "entry": "conf-public",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.8
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok"
+            },
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "public-wrong-origin",
+      "section": "4",
+      "description": "Another origin is rejected.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Origin": "https://evil.example"
+            },
+            "body": {
+              "entry": "conf-public",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "origin_not_allowed",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-public",
+              "set": "check"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "public-missing-origin",
+      "section": "4",
+      "description": "No Origin header is rejected.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {},
+            "body": {
+              "entry": "conf-public",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "origin_not_allowed",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              }
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "public-rate-limit",
+      "section": "4",
+      "description": "per_ip_per_min is 2: the third request from one IP within a minute is rate limited; another IP is not.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Origin": "https://app.example"
+            },
+            "body": {
+              "entry": "conf-public",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.8
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok"
+            }
+          }
+        },
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Origin": "https://app.example"
+            },
+            "body": {
+              "entry": "conf-public",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.8
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok"
+            }
+          }
+        },
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Origin": "https://app.example"
+            },
+            "body": {
+              "entry": "conf-public",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rate_limited",
+              "julius": "0.1",
+              "reason": "caller_rate_limit",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-public",
+              "set": "check"
+            },
+            "provider_calls": 0
+          }
+        },
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "198.51.100.20",
+            "headers": {
+              "Origin": "https://app.example"
+            },
+            "body": {
+              "entry": "conf-public",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.8
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "private-ignores-origin",
+      "section": "4",
+      "description": "A private entry with a valid key works whatever the Origin.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private",
+              "Origin": "https://evil.example"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.2
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

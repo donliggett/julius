@@ -1,0 +1,155 @@
+{
+  "suite": "julius-conformance",
+  "julius": "0.1",
+  "group": "set-hash",
+  "cases": [
+    {
+      "id": "hash-ignores-bands",
+      "section": "8",
+      "description": "Two entries with the same questions and model but different bands report the same set_hash.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-inline"
+            },
+            "body": {
+              "entry": "conf-inline",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "kind": {
+                  "probs": {
+                    "bug": 0.2,
+                    "feature": 0.7,
+                    "other": 0.1
+                  },
+                  "confidence": 0.9
+                },
+                "urgency": {
+                  "score": 1.4,
+                  "confidence": 0.8
+                },
+                "risky": {
+                  "p": 0.1
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "set_hash": "790222de"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "hash-changes-with-model",
+      "section": "8",
+      "description": "The same questions on a different model give a different set_hash.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-model2"
+            },
+            "body": {
+              "entry": "conf-model2",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "kind": {
+                  "probs": {
+                    "bug": 0.2,
+                    "feature": 0.7,
+                    "other": 0.1
+                  },
+                  "confidence": 0.9
+                },
+                "urgency": {
+                  "score": 1.4,
+                  "confidence": 0.8
+                },
+                "risky": {
+                  "p": 0.1
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "model": "mock-model-2",
+              "set_hash": "cf0c60fa"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "hash-shared-equals-inline",
+      "section": "8",
+      "description": "$shared options hash the same as the same options written inline.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-inline"
+            },
+            "body": {
+              "entry": "conf-inline",
+              "set": "shared-set",
+              "state": {
+                "text": "The green button"
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "pick": {
+                  "probs": {
+                    "red": 0.1,
+                    "green": 0.8,
+                    "blue": 0.1
+                  }
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "set_hash": "5a2abab6"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

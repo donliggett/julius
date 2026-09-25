@@ -1,0 +1,1280 @@
+{
+  "suite": "julius-conformance",
+  "julius": "0.1",
+  "group": "batch",
+  "cases": [
+    {
+      "id": "batch-order-and-ids",
+      "section": "6",
+      "description": "One envelope per item, in request order, each with its id.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide/batch",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "items": [
+                {
+                  "id": "b",
+                  "state": "one"
+                },
+                {
+                  "id": "a",
+                  "state": "two"
+                }
+              ]
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.1
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.9
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "julius": "0.1",
+              "entry": "conf-private",
+              "set": "nobands",
+              "results": [
+                {
+                  "id": "b",
+                  "status": "ok",
+                  "answers": {
+                    "flag": {
+                      "p": 0.1
+                    }
+                  },
+                  "set_hash": "8fb117e8"
+                },
+                {
+                  "id": "a",
+                  "status": "ok",
+                  "answers": {
+                    "flag": {
+                      "p": 0.9
+                    }
+                  }
+                }
+              ]
+            },
+            "provider_calls": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "batch-item-bad-params",
+      "section": "6",
+      "description": "A bad item fails on its own; the others are answered.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide/batch",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "route",
+              "items": [
+                {
+                  "id": "x",
+                  "state": {
+                    "body": "Checkout page times out after the last deploy."
+                  },
+                  "params": {
+                    "teams": []
+                  }
+                },
+                {
+                  "id": "y",
+                  "state": {
+                    "body": "Checkout page times out after the last deploy."
+                  },
+                  "params": {
+                    "teams": [
+                      {
+                        "id": "t1",
+                        "name": "Payments",
+                        "size": 4
+                      },
+                      {
+                        "id": "t2",
+                        "name": "Search",
+                        "size": 7
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "owns.t1": {
+                  "p": 0.9
+                },
+                "owns.t2": {
+                  "p": 0.05
+                },
+                "tagged.t1": {
+                  "p": 0.3
+                },
+                "tagged.t2": {
+                  "p": 0.2
+                },
+                "severe": {
+                  "p": 0.6
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "results": [
+                {
+                  "id": "x",
+                  "status": "rejected",
+                  "reason": "bad_params",
+                  "answers": {
+                    "$absent": true
+                  }
+                },
+                {
+                  "id": "y",
+                  "status": "ok"
+                }
+              ]
+            },
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "batch-budget-runs-out",
+      "section": "6",
+      "description": "Spend reaches the limit partway through; later items are over_budget.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide/batch",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-budget"
+            },
+            "body": {
+              "entry": "conf-budget",
+              "set": "check",
+              "items": [
+                {
+                  "id": "i1",
+                  "state": "a"
+                },
+                {
+                  "id": "i2",
+                  "state": "b"
+                },
+                {
+                  "id": "i3",
+                  "state": "c"
+                }
+              ]
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.25
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.25
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "results": [
+                {
+                  "id": "i1",
+                  "status": "ok"
+                },
+                {
+                  "id": "i2",
+                  "status": "ok"
+                },
+                {
+                  "id": "i3",
+                  "status": "over_budget",
+                  "reason": "entry_budget"
+                }
+              ]
+            },
+            "provider_calls": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "batch-auth-failure",
+      "section": "6",
+      "description": "An auth failure rejects the whole batch with a single envelope.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide/batch",
+            "client_ip": "203.0.113.10",
+            "headers": {},
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "items": [
+                {
+                  "id": "a",
+                  "state": "x"
+                }
+              ]
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "auth_failed",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "results": {
+                "$absent": true
+              }
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "batch-unknown-set",
+      "section": "6",
+      "description": "An unknown set rejects the whole batch.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide/batch",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nope",
+              "items": [
+                {
+                  "id": "a",
+                  "state": "x"
+                }
+              ]
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "unknown_set",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "results": {
+                "$absent": true
+              }
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "batch-duplicate-ids",
+      "section": "6",
+      "description": "Duplicate item ids reject the whole batch.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide/batch",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "items": [
+                {
+                  "id": "a",
+                  "state": "x"
+                },
+                {
+                  "id": "a",
+                  "state": "y"
+                }
+              ]
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "bad_request",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "results": {
+                "$absent": true
+              }
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "batch-item-missing-state",
+      "section": "6",
+      "description": "An item without state rejects the whole batch.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide/batch",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "items": [
+                {
+                  "id": "a"
+                }
+              ]
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "bad_request",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "results": {
+                "$absent": true
+              }
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "batch-fifty-items",
+      "section": "6",
+      "description": "A decider accepts at least 50 items.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide/batch",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "items": [
+                {
+                  "id": "i00",
+                  "state": "item 0"
+                },
+                {
+                  "id": "i01",
+                  "state": "item 1"
+                },
+                {
+                  "id": "i02",
+                  "state": "item 2"
+                },
+                {
+                  "id": "i03",
+                  "state": "item 3"
+                },
+                {
+                  "id": "i04",
+                  "state": "item 4"
+                },
+                {
+                  "id": "i05",
+                  "state": "item 5"
+                },
+                {
+                  "id": "i06",
+                  "state": "item 6"
+                },
+                {
+                  "id": "i07",
+                  "state": "item 7"
+                },
+                {
+                  "id": "i08",
+                  "state": "item 8"
+                },
+                {
+                  "id": "i09",
+                  "state": "item 9"
+                },
+                {
+                  "id": "i10",
+                  "state": "item 10"
+                },
+                {
+                  "id": "i11",
+                  "state": "item 11"
+                },
+                {
+                  "id": "i12",
+                  "state": "item 12"
+                },
+                {
+                  "id": "i13",
+                  "state": "item 13"
+                },
+                {
+                  "id": "i14",
+                  "state": "item 14"
+                },
+                {
+                  "id": "i15",
+                  "state": "item 15"
+                },
+                {
+                  "id": "i16",
+                  "state": "item 16"
+                },
+                {
+                  "id": "i17",
+                  "state": "item 17"
+                },
+                {
+                  "id": "i18",
+                  "state": "item 18"
+                },
+                {
+                  "id": "i19",
+                  "state": "item 19"
+                },
+                {
+                  "id": "i20",
+                  "state": "item 20"
+                },
+                {
+                  "id": "i21",
+                  "state": "item 21"
+                },
+                {
+                  "id": "i22",
+                  "state": "item 22"
+                },
+                {
+                  "id": "i23",
+                  "state": "item 23"
+                },
+                {
+                  "id": "i24",
+                  "state": "item 24"
+                },
+                {
+                  "id": "i25",
+                  "state": "item 25"
+                },
+                {
+                  "id": "i26",
+                  "state": "item 26"
+                },
+                {
+                  "id": "i27",
+                  "state": "item 27"
+                },
+                {
+                  "id": "i28",
+                  "state": "item 28"
+                },
+                {
+                  "id": "i29",
+                  "state": "item 29"
+                },
+                {
+                  "id": "i30",
+                  "state": "item 30"
+                },
+                {
+                  "id": "i31",
+                  "state": "item 31"
+                },
+                {
+                  "id": "i32",
+                  "state": "item 32"
+                },
+                {
+                  "id": "i33",
+                  "state": "item 33"
+                },
+                {
+                  "id": "i34",
+                  "state": "item 34"
+                },
+                {
+                  "id": "i35",
+                  "state": "item 35"
+                },
+                {
+                  "id": "i36",
+                  "state": "item 36"
+                },
+                {
+                  "id": "i37",
+                  "state": "item 37"
+                },
+                {
+                  "id": "i38",
+                  "state": "item 38"
+                },
+                {
+                  "id": "i39",
+                  "state": "item 39"
+                },
+                {
+                  "id": "i40",
+                  "state": "item 40"
+                },
+                {
+                  "id": "i41",
+                  "state": "item 41"
+                },
+                {
+                  "id": "i42",
+                  "state": "item 42"
+                },
+                {
+                  "id": "i43",
+                  "state": "item 43"
+                },
+                {
+                  "id": "i44",
+                  "state": "item 44"
+                },
+                {
+                  "id": "i45",
+                  "state": "item 45"
+                },
+                {
+                  "id": "i46",
+                  "state": "item 46"
+                },
+                {
+                  "id": "i47",
+                  "state": "item 47"
+                },
+                {
+                  "id": "i48",
+                  "state": "item 48"
+                },
+                {
+                  "id": "i49",
+                  "state": "item 49"
+                }
+              ]
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            },
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.5
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "results": [
+                {
+                  "id": "i00",
+                  "status": "ok"
+                },
+                {
+                  "id": "i01",
+                  "status": "ok"
+                },
+                {
+                  "id": "i02",
+                  "status": "ok"
+                },
+                {
+                  "id": "i03",
+                  "status": "ok"
+                },
+                {
+                  "id": "i04",
+                  "status": "ok"
+                },
+                {
+                  "id": "i05",
+                  "status": "ok"
+                },
+                {
+                  "id": "i06",
+                  "status": "ok"
+                },
+                {
+                  "id": "i07",
+                  "status": "ok"
+                },
+                {
+                  "id": "i08",
+                  "status": "ok"
+                },
+                {
+                  "id": "i09",
+                  "status": "ok"
+                },
+                {
+                  "id": "i10",
+                  "status": "ok"
+                },
+                {
+                  "id": "i11",
+                  "status": "ok"
+                },
+                {
+                  "id": "i12",
+                  "status": "ok"
+                },
+                {
+                  "id": "i13",
+                  "status": "ok"
+                },
+                {
+                  "id": "i14",
+                  "status": "ok"
+                },
+                {
+                  "id": "i15",
+                  "status": "ok"
+                },
+                {
+                  "id": "i16",
+                  "status": "ok"
+                },
+                {
+                  "id": "i17",
+                  "status": "ok"
+                },
+                {
+                  "id": "i18",
+                  "status": "ok"
+                },
+                {
+                  "id": "i19",
+                  "status": "ok"
+                },
+                {
+                  "id": "i20",
+                  "status": "ok"
+                },
+                {
+                  "id": "i21",
+                  "status": "ok"
+                },
+                {
+                  "id": "i22",
+                  "status": "ok"
+                },
+                {
+                  "id": "i23",
+                  "status": "ok"
+                },
+                {
+                  "id": "i24",
+                  "status": "ok"
+                },
+                {
+                  "id": "i25",
+                  "status": "ok"
+                },
+                {
+                  "id": "i26",
+                  "status": "ok"
+                },
+                {
+                  "id": "i27",
+                  "status": "ok"
+                },
+                {
+                  "id": "i28",
+                  "status": "ok"
+                },
+                {
+                  "id": "i29",
+                  "status": "ok"
+                },
+                {
+                  "id": "i30",
+                  "status": "ok"
+                },
+                {
+                  "id": "i31",
+                  "status": "ok"
+                },
+                {
+                  "id": "i32",
+                  "status": "ok"
+                },
+                {
+                  "id": "i33",
+                  "status": "ok"
+                },
+                {
+                  "id": "i34",
+                  "status": "ok"
+                },
+                {
+                  "id": "i35",
+                  "status": "ok"
+                },
+                {
+                  "id": "i36",
+                  "status": "ok"
+                },
+                {
+                  "id": "i37",
+                  "status": "ok"
+                },
+                {
+                  "id": "i38",
+                  "status": "ok"
+                },
+                {
+                  "id": "i39",
+                  "status": "ok"
+                },
+                {
+                  "id": "i40",
+                  "status": "ok"
+                },
+                {
+                  "id": "i41",
+                  "status": "ok"
+                },
+                {
+                  "id": "i42",
+                  "status": "ok"
+                },
+                {
+                  "id": "i43",
+                  "status": "ok"
+                },
+                {
+                  "id": "i44",
+                  "status": "ok"
+                },
+                {
+                  "id": "i45",
+                  "status": "ok"
+                },
+                {
+                  "id": "i46",
+                  "status": "ok"
+                },
+                {
+                  "id": "i47",
+                  "status": "ok"
+                },
+                {
+                  "id": "i48",
+                  "status": "ok"
+                },
+                {
+                  "id": "i49",
+                  "status": "ok"
+                }
+              ]
+            },
+            "provider_calls": 50
+          }
+        }
+      ]
+    }
+  ]
+}

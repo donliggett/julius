@@ -1,0 +1,802 @@
+{
+  "suite": "julius-conformance",
+  "julius": "0.1",
+  "group": "statuses",
+  "cases": [
+    {
+      "id": "bad-request-invalid-json",
+      "section": "7",
+      "description": "A body that isn't JSON is rejected.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "raw_body": "{not json"
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "reason": "bad_request",
+              "julius": "0.1"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "bad-request-missing-state",
+      "section": "6",
+      "description": "state is required.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "triage"
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "bad_request",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "triage"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "unknown-entry",
+      "section": "7",
+      "description": "An entry the decider doesn't know is rejected.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-nope",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "unknown_entry",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-nope",
+              "set": "triage"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "unknown-entry-before-auth",
+      "section": "7",
+      "description": "Unknown entry is reported before the key check.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer wrong"
+            },
+            "body": {
+              "entry": "conf-nope",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "unknown_entry",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              }
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "auth-missing-key",
+      "section": "7",
+      "description": "A private entry without a key is rejected.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {},
+            "body": {
+              "entry": "conf-private",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "auth_failed",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "triage"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "auth-wrong-key",
+      "section": "7",
+      "description": "A key for another entry is rejected.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-logfull"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "auth_failed",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              }
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "auth-before-unknown-set",
+      "section": "7",
+      "description": "The key check comes before the set lookup.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer wrong"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nope",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "auth_failed",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              }
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "unknown-set",
+      "section": "7",
+      "description": "A set the entry doesn't define is rejected.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nope",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "unknown_set",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "nope"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "state-too-large",
+      "section": "7",
+      "description": "State over the provider's size limit is rejected, and the error doesn't echo the state.",
+      "provider": {
+        "max_state_chars": 200
+      },
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "state": {
+                "text": "CANARY-7f3a xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "state_too_large",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "nobands"
+            },
+            "body_excludes": [
+              "CANARY-7f3a"
+            ],
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "killed-entry",
+      "section": "7",
+      "description": "A switched-off entry returns over_budget / killed without calling the provider.",
+      "setup": {
+        "killed": [
+          "conf-private"
+        ]
+      },
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "over_budget",
+              "julius": "0.1",
+              "reason": "killed",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "nobands"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "validation-before-killed",
+      "section": "7",
+      "description": "Params are checked before the kill switch.",
+      "setup": {
+        "killed": [
+          "conf-private"
+        ]
+      },
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "route",
+              "state": {
+                "body": "Checkout page times out after the last deploy."
+              },
+              "params": {
+                "teams": []
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "bad_params",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              }
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "provider-timeout",
+      "section": "7",
+      "description": "A provider timeout becomes unavailable / provider_timeout, with no answers and no state echoed.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "state": {
+                "text": "CANARY-7f3a"
+              }
+            }
+          },
+          "responses": [
+            {
+              "error": "timeout"
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "unavailable",
+              "julius": "0.1",
+              "reason": "provider_timeout",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "nobands"
+            },
+            "body_excludes": [
+              "CANARY-7f3a"
+            ],
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "provider-down",
+      "section": "7",
+      "description": "A provider down becomes unavailable / provider_down, with no answers and no state echoed.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "state": {
+                "text": "CANARY-7f3a"
+              }
+            }
+          },
+          "responses": [
+            {
+              "error": "down"
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "unavailable",
+              "julius": "0.1",
+              "reason": "provider_down",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "nobands"
+            },
+            "body_excludes": [
+              "CANARY-7f3a"
+            ],
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "provider-error",
+      "section": "7",
+      "description": "A provider error becomes unavailable / provider_error, with no answers and no state echoed.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "state": {
+                "text": "CANARY-7f3a"
+              }
+            }
+          },
+          "responses": [
+            {
+              "error": "error"
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "unavailable",
+              "julius": "0.1",
+              "reason": "provider_error",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "nobands"
+            },
+            "body_excludes": [
+              "CANARY-7f3a"
+            ],
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "provider-rate-limited",
+      "section": "7",
+      "description": "A provider rate_limited becomes unavailable / provider_rate_limited, with no answers and no state echoed.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "state": {
+                "text": "CANARY-7f3a"
+              }
+            }
+          },
+          "responses": [
+            {
+              "error": "rate_limited"
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "unavailable",
+              "julius": "0.1",
+              "reason": "provider_rate_limited",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "nobands"
+            },
+            "body_excludes": [
+              "CANARY-7f3a"
+            ],
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "uncalibrated-refused",
+      "section": "10",
+      "description": "An entry that doesn't accept uncalibrated answers gets unavailable / no_calibrated_provider, and the provider is never called.",
+      "provider": {
+        "calibrated": false
+      },
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "unavailable",
+              "julius": "0.1",
+              "reason": "no_calibrated_provider",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "nobands"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "uncalibrated-accepted",
+      "section": "10",
+      "description": "An entry with accept_uncalibrated: true gets answers marked calibrated: false.",
+      "provider": {
+        "calibrated": false
+      },
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-uncal"
+            },
+            "body": {
+              "entry": "conf-uncal",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.8
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "calibrated": false,
+              "answers": {
+                "flag": {
+                  "p": 0.8
+                }
+              }
+            },
+            "provider_calls": 1
+          }
+        }
+      ]
+    }
+  ]
+}

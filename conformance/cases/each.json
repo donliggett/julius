@@ -1,0 +1,492 @@
+{
+  "suite": "julius-conformance",
+  "julius": "0.1",
+  "group": "each",
+  "cases": [
+    {
+      "id": "each-expands-in-order",
+      "section": "3",
+      "description": "Each item gets its own copy of the question, in entry order then params order, with placeholders filled and {{ }} written as literal braces.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "route",
+              "state": {
+                "body": "Checkout page times out after the last deploy."
+              },
+              "params": {
+                "teams": [
+                  {
+                    "id": "t1",
+                    "name": "Payments",
+                    "size": 4
+                  },
+                  {
+                    "id": "t2",
+                    "name": "Search",
+                    "size": 7
+                  }
+                ]
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "owns.t1": {
+                  "p": 0.9
+                },
+                "owns.t2": {
+                  "p": 0.05
+                },
+                "tagged.t1": {
+                  "p": 0.3
+                },
+                "tagged.t2": {
+                  "p": 0.2
+                },
+                "severe": {
+                  "p": 0.6
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "set_hash": "f65247df",
+              "band": {
+                "$absent": true
+              },
+              "answers": {
+                "owns.t1": {
+                  "p": 0.9
+                },
+                "owns.t2": {
+                  "p": 0.05
+                },
+                "tagged.t1": {
+                  "p": 0.3
+                },
+                "tagged.t2": {
+                  "p": 0.2
+                },
+                "severe": {
+                  "p": 0.6
+                }
+              }
+            },
+            "provider_calls": [
+              {
+                "questions": [
+                  {
+                    "id": "owns.t1",
+                    "type": "yesno",
+                    "instructions": "Team t1 (Payments) owns the component in this report"
+                  },
+                  {
+                    "id": "owns.t2",
+                    "type": "yesno",
+                    "instructions": "Team t2 (Search) owns the component in this report"
+                  },
+                  {
+                    "id": "tagged.t1",
+                    "type": "yesno",
+                    "instructions": "Team t1 handles tickets tagged {urgent} and has 4 members"
+                  },
+                  {
+                    "id": "tagged.t2",
+                    "type": "yesno",
+                    "instructions": "Team t2 handles tickets tagged {urgent} and has 7 members"
+                  },
+                  {
+                    "id": "severe",
+                    "type": "yesno",
+                    "instructions": "The report describes an outage"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "each-missing-list",
+      "section": "3",
+      "description": "The params list is missing. The request is rejected before any provider call.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "route",
+              "state": {
+                "body": "Checkout page times out after the last deploy."
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "bad_params",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "route"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "each-empty-list",
+      "section": "3",
+      "description": "The params list is empty. The request is rejected before any provider call.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "route",
+              "state": {
+                "body": "Checkout page times out after the last deploy."
+              },
+              "params": {
+                "teams": []
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "bad_params",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "route"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "each-duplicate-ids",
+      "section": "3",
+      "description": "Item ids repeat. The request is rejected before any provider call.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "route",
+              "state": {
+                "body": "Checkout page times out after the last deploy."
+              },
+              "params": {
+                "teams": [
+                  {
+                    "id": "t1",
+                    "name": "Payments",
+                    "size": 4
+                  },
+                  {
+                    "id": "t1",
+                    "name": "Payments",
+                    "size": 4
+                  }
+                ]
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "bad_params",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "route"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "each-missing-field",
+      "section": "3",
+      "description": "An item lacks a field a placeholder uses. The request is rejected before any provider call.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "route",
+              "state": {
+                "body": "Checkout page times out after the last deploy."
+              },
+              "params": {
+                "teams": [
+                  {
+                    "id": "t1",
+                    "name": "Payments"
+                  }
+                ]
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "bad_params",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "route"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "each-bad-id",
+      "section": "3",
+      "description": "An item id doesn't match the id pattern. The request is rejected before any provider call.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "route",
+              "state": {
+                "body": "Checkout page times out after the last deploy."
+              },
+              "params": {
+                "teams": [
+                  {
+                    "id": "T 1",
+                    "name": "Payments",
+                    "size": 4
+                  }
+                ]
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "bad_params",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "route"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "each-float-value",
+      "section": "3",
+      "description": "A placeholder value is neither a string nor an integer. The request is rejected before any provider call.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "route",
+              "state": {
+                "body": "Checkout page times out after the last deploy."
+              },
+              "params": {
+                "teams": [
+                  {
+                    "id": "t1",
+                    "name": "Payments",
+                    "size": 4.5
+                  }
+                ]
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "bad_params",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "route"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "each-object-value",
+      "section": "3",
+      "description": "A placeholder value is an object. The request is rejected before any provider call.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "route",
+              "state": {
+                "body": "Checkout page times out after the last deploy."
+              },
+              "params": {
+                "teams": [
+                  {
+                    "id": "t1",
+                    "name": {
+                      "en": "Payments"
+                    },
+                    "size": 4
+                  }
+                ]
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "rejected",
+              "julius": "0.1",
+              "reason": "bad_params",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-private",
+              "set": "route"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    }
+  ]
+}

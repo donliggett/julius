@@ -1,0 +1,429 @@
+{
+  "suite": "julius-conformance",
+  "julius": "0.1",
+  "group": "bands",
+  "cases": [
+    {
+      "id": "band-first-match-wins",
+      "section": "5",
+      "description": "Several rules match; the first one listed wins.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "kind": {
+                  "probs": {
+                    "bug": 0.8,
+                    "feature": 0.1,
+                    "other": 0.1
+                  },
+                  "confidence": 0.9
+                },
+                "urgency": {
+                  "score": 2.0,
+                  "confidence": 0.9
+                },
+                "risky": {
+                  "p": 0.8
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "band": "stop"
+            },
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "band-and-binds-tighter",
+      "section": "5",
+      "description": "'A or B and C' is 'A or (B and C)': A true, C false still matches.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "kind": {
+                  "probs": {
+                    "bug": 0.1,
+                    "feature": 0.8,
+                    "other": 0.1
+                  },
+                  "confidence": 0.9
+                },
+                "urgency": {
+                  "score": 0.2,
+                  "confidence": 1
+                },
+                "risky": {
+                  "p": 0.6
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "band": "escalate"
+            },
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "band-choice-and-level",
+      "section": "5",
+      "description": "choice == and level >= combine with and.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "kind": {
+                  "probs": {
+                    "bug": 0.8,
+                    "feature": 0.1,
+                    "other": 0.1
+                  },
+                  "confidence": 0.9
+                },
+                "urgency": {
+                  "score": 2.0,
+                  "confidence": 0.9
+                },
+                "risky": {
+                  "p": 0.1
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "band": "escalate"
+            },
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "band-missing-confidence-is-false",
+      "section": "5",
+      "description": "A < comparison on a missing confidence is false.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "kind": {
+                  "probs": {
+                    "bug": 0.1,
+                    "feature": 0.8,
+                    "other": 0.1
+                  }
+                },
+                "urgency": {
+                  "score": 1.0,
+                  "confidence": 1
+                },
+                "risky": {
+                  "p": 0.1
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "band": "go"
+            },
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "band-missing-field-not-equal-is-false",
+      "section": "5",
+      "description": "!= against a missing field is also false.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "kind": {
+                  "probs": {
+                    "bug": 0.1,
+                    "feature": 0.8,
+                    "other": 0.1
+                  },
+                  "confidence": 0.9
+                },
+                "urgency": {
+                  "score": 0.2
+                },
+                "risky": {
+                  "p": 0.1
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "band": "go"
+            },
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "band-not-equal-present",
+      "section": "5",
+      "description": "!= against a present field that differs is true.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "kind": {
+                  "probs": {
+                    "bug": 0.1,
+                    "feature": 0.8,
+                    "other": 0.1
+                  },
+                  "confidence": 0.9
+                },
+                "urgency": {
+                  "score": 0.2,
+                  "confidence": 0.5
+                },
+                "risky": {
+                  "p": 0.1
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "band": "unsure"
+            },
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "band-low-confidence",
+      "section": "5",
+      "description": "A present confidence below the threshold matches.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "kind": {
+                  "probs": {
+                    "bug": 0.4,
+                    "feature": 0.35,
+                    "other": 0.25
+                  },
+                  "confidence": 0.3
+                },
+                "urgency": {
+                  "score": 1.0,
+                  "confidence": 1
+                },
+                "risky": {
+                  "p": 0.1
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "band": "review"
+            },
+            "provider_calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "band-default",
+      "section": "5",
+      "description": "No rule matches, so the default is returned.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "triage",
+              "state": {
+                "title": "Export fails",
+                "body": "CSV export returns an empty file since Monday."
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "kind": {
+                  "probs": {
+                    "bug": 0.1,
+                    "feature": 0.8,
+                    "other": 0.1
+                  },
+                  "confidence": 0.9
+                },
+                "urgency": {
+                  "score": 1.0,
+                  "confidence": 1
+                },
+                "risky": {
+                  "p": 0.1
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok",
+              "band": "go"
+            },
+            "provider_calls": 1
+          }
+        }
+      ]
+    }
+  ]
+}

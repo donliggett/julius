@@ -103,7 +103,7 @@ vip:
 
 Request `params: { runners: [{ id: "r1" }, { id: "r2" }] }` produces answers `vip.r1` and `vip.r2`.
 
-A request is `rejected` with reason `bad_params` if the list is missing or empty, an item has no valid `id`, ids repeat, or a placeholder names a field the item doesn't have. A literal brace is written `{{` or `}}`.
+Placeholder values must be strings or integers. A request is `rejected` with reason `bad_params` if the list is missing or empty, an item has no valid `id`, ids repeat, a placeholder names a field the item doesn't have, or a value has another type. A literal brace is written `{{` or `}}`.
 
 ## 4. Entry schema
 
@@ -114,7 +114,7 @@ An entry is a YAML block inside the project's `JULIUS.md`, fenced with the info 
 | `julius` | yes | Standard version, e.g. `"0.1"`. |
 | `entry` | yes | Slug, unique within a decider. |
 | `access` | yes | `private` (bearer key required) or `public` (no secret; origin-checked and rate-limited). |
-| `origins` | if public | Allowed browser origins. |
+| `origins` | if public | Allowed browser origins. A request to a public entry without one of these in its `Origin` header is rejected with `origin_not_allowed`. |
 | `model` | yes | Pinned model identifier. Avoid floating aliases such as `latest`. |
 | `accept_uncalibrated` | no | Default `false`. If `false`, the decider must never return answers from an uncalibrated source for this entry. |
 | `log` | yes | `full` (state + answers), `answers` (answers only), or `none` (metadata only). Metadata is always kept: time, entry, set, `set_hash`, status, reason, `ms`, cost, and `request_id`. |
@@ -126,6 +126,12 @@ An entry is a YAML block inside the project's `JULIUS.md`, fenced with the info 
 | `examples` | no | Path to a golden-examples file (section 9), relative to `JULIUS.md`. |
 
 How an entry reaches a decider (uploaded, read from the project's repo, submitted to a registry) is up to the decider and outside this standard. A decider rejects an entry whose `julius` version it doesn't implement.
+
+### Budgets and rate limits
+
+- Spend is the cost the provider reports for each call, summed per entry per UTC day.
+- Before each provider call, the decider checks the entry's spend for the day. Once it has reached `daily_usd`, the call is refused with `over_budget` / `entry_budget`. A single call may take spend past the limit; the next one is refused.
+- `per_ip_per_min` counts requests per client IP in any 60-second window. A batch counts as one request.
 
 ## 5. Bands
 
@@ -145,8 +151,8 @@ Expression grammar (v0.1):
 - Operand: `<question_id>.<field>` where field is `p` (yesno), `choice`, `score`, `level`, or `confidence`.
 - Operators: `> >= < <= == !=`.
 - Values: numbers, or quoted strings for `choice`.
-- Combine with `and` / `or`; parentheses allowed.
-- A comparison against a missing field is `false`.
+- Combine with `and` / `or`; `and` binds tighter than `or`; parentheses allowed.
+- A comparison against a missing field is `false`, including `!=`.
 - v0.1 bands may reference only questions without `each`, and only the fields above (not individual `probs`).
 
 Bands are labels, not actions. The project decides what each label means.
@@ -235,8 +241,8 @@ Answer shapes:
 
 | Type | Shape |
 | --- | --- |
-| `choice` | `{ "choice": key, "probs": { key: number }, "confidence": number }` |
-| `score` | `{ "score": number, "level": int, "label": string, "confidence": number }` — `score` is on the 0-based level scale; `level` is `score` rounded; `label` is `levels[level]`. |
+| `choice` | `{ "choice": key, "probs": { key: number }, "confidence": number }` — `choice` is the key with the highest probability; a tie goes to the option listed first in the entry. |
+| `score` | `{ "score": number, "level": int, "label": string, "confidence": number }` — `score` is on the 0-based level scale; `level` is `score` rounded half up (`floor(score + 0.5)`) and clamped to the level range; `label` is `levels[level]`. |
 | `yesno` | `{ "p": number }`, plus `confidence` if the provider supplies it. |
 
 `confidence` is present only when the provider supplies it. `probs` for a `choice` covers every option and sums to 1 (within rounding). `band` is present when the set has band rules.
@@ -251,7 +257,23 @@ Answer shapes:
 | `rate_limited` | Caller exceeded the rate limit. | no |
 | `rejected` | Auth failed, unknown entry or set, or the request failed validation. | no |
 
-Non-`ok` responses include `reason` (a short machine code) and may include `retry_after` in seconds.
+Non-`ok` responses include `status`, `julius`, `reason` (a short machine code), `ms`, and `request_id`, plus `entry` and `set` as sent. They may include `retry_after` in seconds. They never include `answers` or `band`.
+
+### Check order
+
+When more than one failure applies, the first in this order is reported:
+
+1. The body isn't valid JSON or is missing `entry`, `set`, or `state`: `rejected` / `bad_request`
+2. Unknown entry: `rejected` / `unknown_entry`
+3. Key or origin check: `rejected` / `auth_failed` or `origin_not_allowed`
+4. Caller rate limit: `rate_limited` / `caller_rate_limit`
+5. Unknown set: `rejected` / `unknown_set`
+6. Params and state size: `rejected` / `bad_params` or `state_too_large`
+7. Entry switched off, then budget: `over_budget` / `killed`, `global_budget`, or `entry_budget`
+8. No acceptable provider: `unavailable` / `no_calibrated_provider`
+9. The provider call itself: `unavailable` / `provider_*`
+
+In a batch, steps 1–5 apply to the whole batch. So do a missing `items` list, an item without a valid `id` or without `state`, and duplicate item ids (`bad_request`), and too many items (`batch_too_large`). Steps 6–9 apply to each item separately.
 
 ### Reason codes
 
@@ -298,13 +320,14 @@ Examples are run by a decider or a separate checker whenever a set or its model 
 
 A conforming decider:
 
-1. Validates entries at registration and rejects sets exceeding the active provider's limits.
+1. Validates entries at registration and rejects invalid ones with a reason: `version_unsupported`, `set_too_large` (a set exceeds the provider's limits), or `invalid_entry` (anything else in sections 3–5).
 2. Enforces `access`, `origins`, `budget`, and `log` exactly as declared.
 3. Never returns uncalibrated answers to an entry with `accept_uncalibrated: false`.
 4. Returns the envelope in section 7 for every request, including failures.
 5. Never includes state content in error messages.
 6. Treats state as opaque data: it is passed to the provider and never interpreted as instructions to the decider.
 7. Records `set_hash` with every logged decision.
+8. Passes the conformance suite in [`conformance/`](conformance/).
 
 ## 11. Security notes
 

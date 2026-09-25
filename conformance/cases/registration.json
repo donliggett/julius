@@ -1,0 +1,116 @@
+{
+  "suite": "julius-conformance",
+  "julius": "0.1",
+  "group": "registration",
+  "cases": [
+    {
+      "id": "register-valid",
+      "section": "10",
+      "description": "A valid entry registers.",
+      "preload": false,
+      "steps": [
+        {
+          "register": "conf-private.md",
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "register-bad-version",
+      "section": "10",
+      "description": "An unknown standard version is rejected.",
+      "preload": false,
+      "steps": [
+        {
+          "register": "invalid/bad-version.md",
+          "expect": {
+            "ok": false,
+            "reason": "version_unsupported"
+          }
+        }
+      ]
+    },
+    {
+      "id": "register-bad-band",
+      "section": "10",
+      "description": "A band rule naming an unknown question is rejected.",
+      "preload": false,
+      "steps": [
+        {
+          "register": "invalid/bad-band.md",
+          "expect": {
+            "ok": false,
+            "reason": "invalid_entry"
+          }
+        }
+      ]
+    },
+    {
+      "id": "register-missing-shared",
+      "section": "10",
+      "description": "A $shared reference with no definition is rejected.",
+      "preload": false,
+      "steps": [
+        {
+          "register": "invalid/missing-shared.md",
+          "expect": {
+            "ok": false,
+            "reason": "invalid_entry"
+          }
+        }
+      ]
+    },
+    {
+      "id": "register-bool-key",
+      "section": "10",
+      "description": "Unquoted true/false keys (read by YAML as booleans) are rejected.",
+      "preload": false,
+      "steps": [
+        {
+          "register": "invalid/bool-key.md",
+          "expect": {
+            "ok": false,
+            "reason": "invalid_entry"
+          }
+        }
+      ]
+    },
+    {
+      "id": "register-set-too-large",
+      "section": "10",
+      "description": "A set with more questions than the provider allows is rejected.",
+      "preload": false,
+      "provider": {
+        "max_questions": 2
+      },
+      "steps": [
+        {
+          "register": "invalid/big-set.md",
+          "expect": {
+            "ok": false,
+            "reason": "set_too_large"
+          }
+        }
+      ]
+    },
+    {
+      "id": "register-set-within-limit",
+      "section": "10",
+      "description": "The same entry registers when the provider allows enough questions.",
+      "preload": false,
+      "provider": {
+        "max_questions": 3
+      },
+      "steps": [
+        {
+          "register": "invalid/big-set.md",
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
+    }
+  ]
+}

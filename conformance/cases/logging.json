@@ -1,0 +1,212 @@
+{
+  "suite": "julius-conformance",
+  "julius": "0.1",
+  "group": "logging",
+  "cases": [
+    {
+      "id": "log-answers",
+      "section": "4",
+      "description": "log: answers stores answers and metadata, not state.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "state": {
+                "text": "CANARY-7f3a"
+              },
+              "request_id": "log-1"
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.8
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok"
+            },
+            "log": [
+              {
+                "entry": "conf-private",
+                "set": "nobands",
+                "set_hash": "8fb117e8",
+                "status": "ok",
+                "request_id": "log-1",
+                "answers": {
+                  "flag": {
+                    "p": 0.8
+                  }
+                },
+                "state": {
+                  "$absent": true
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "log-full",
+      "section": "4",
+      "description": "log: full stores state as sent, plus answers.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-logfull"
+            },
+            "body": {
+              "entry": "conf-logfull",
+              "set": "check",
+              "state": {
+                "text": "CANARY-7f3a"
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.8
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok"
+            },
+            "log": [
+              {
+                "entry": "conf-logfull",
+                "set_hash": "c561c35a",
+                "status": "ok",
+                "state": {
+                  "text": "CANARY-7f3a"
+                },
+                "answers": {
+                  "flag": {
+                    "p": 0.8
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "log-none",
+      "section": "4",
+      "description": "log: none stores metadata only.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-lognone"
+            },
+            "body": {
+              "entry": "conf-lognone",
+              "set": "check",
+              "state": {
+                "text": "CANARY-7f3a"
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {
+                "flag": {
+                  "p": 0.8
+                }
+              },
+              "cost_usd": 0.001
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "ok"
+            },
+            "log": [
+              {
+                "entry": "conf-lognone",
+                "set_hash": "c561c35a",
+                "status": "ok",
+                "state": {
+                  "$absent": true
+                },
+                "answers": {
+                  "$absent": true
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "log-failure",
+      "section": "4",
+      "description": "A provider failure is logged with its status and reason.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-private"
+            },
+            "body": {
+              "entry": "conf-private",
+              "set": "nobands",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "responses": [
+            {
+              "error": "timeout"
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "unavailable"
+            },
+            "log": [
+              {
+                "entry": "conf-private",
+                "set": "nobands",
+                "set_hash": "8fb117e8",
+                "status": "unavailable",
+                "reason": "provider_timeout",
+                "answers": {
+                  "$absent": true
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -105,6 +105,8 @@ python3 skills/add-julius/scripts/validate.py path/to/JULIUS.md
 
 [`STANDARD.md`](STANDARD.md) is the full specification: question types, entry schema, band grammar, request and response formats, reason codes, `set_hash`, and the conformance checklist in section 10.
 
+The [conformance suite](conformance/) turns that checklist into test cases: requests, scripted replies from a mock provider, and the expected envelopes, logs, and provider calls. Write a small harness for your decider, run the cases, and fix what fails.
+
 ## Repository layout
 
 | Path | Contents |
@@ -112,6 +114,7 @@ python3 skills/add-julius/scripts/validate.py path/to/JULIUS.md
 | [`STANDARD.md`](STANDARD.md) | The Julius Standard |
 | [`JULIUS.md`](JULIUS.md) | Entry template to copy into a project |
 | [`examples/`](examples/) | Worked examples |
+| [`conformance/`](conformance/) | Language-neutral test suite for deciders |
 | [`skills/add-julius/`](skills/add-julius/) | Agent skill that adds a Julius entry to a project (draft) |
 | [`tools/`](tools/) | Repo maintenance scripts |
 
