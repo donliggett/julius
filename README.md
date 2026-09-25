@@ -87,6 +87,20 @@ And branches on the response:
 
 [`examples/support-inbox/`](examples/support-inbox/) is a complete worked example: a filled-in entry, golden examples, and sample requests and responses.
 
+Coding agents that support [Agent Skills](https://agentskills.io) can use [`skills/add-julius`](skills/add-julius/SKILL.md) to do steps 1, 2, and 5 for you. It screens the project's decisions, writes the entry, and runs the bundled validator. Anyone can run the validator on its own:
+
+**Windows (PowerShell):**
+
+```
+py skills\add-julius\scripts\validate.py path\to\JULIUS.md
+```
+
+**macOS / Linux:**
+
+```
+python3 skills/add-julius/scripts/validate.py path/to/JULIUS.md
+```
+
 ## Building a decider
 
 [`STANDARD.md`](STANDARD.md) is the full specification: question types, entry schema, band grammar, request and response formats, reason codes, `set_hash`, and the conformance checklist in section 10.
@@ -98,6 +112,8 @@ And branches on the response:
 | [`STANDARD.md`](STANDARD.md) | The Julius Standard |
 | [`JULIUS.md`](JULIUS.md) | Entry template to copy into a project |
 | [`examples/`](examples/) | Worked examples |
+| [`skills/add-julius/`](skills/add-julius/) | Agent skill that adds a Julius entry to a project (draft) |
+| [`tools/`](tools/) | Repo maintenance scripts |
 
 ## License
 

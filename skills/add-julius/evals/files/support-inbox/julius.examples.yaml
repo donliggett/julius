@@ -1,0 +1,73 @@
+# Golden examples for larkspur-support (fictional). See STANDARD.md section 9.
+
+- set: triage
+  note: Plain shipping question, should be drafted automatically
+  state:
+    subject: "Where is my order?"
+    body: "Hi, I ordered the jasmine green sampler last week and haven't seen a tracking number yet. Could you check?"
+    open_orders: 1
+    days_since_last_order: 6
+  expect:
+    topic: { choice: order_status }
+    refund_request: { p_max: 0.3 }
+    band: auto_draft
+
+- set: triage
+  note: Damaged item with a clear refund ask goes to a person
+  state:
+    subject: "Tin arrived crushed"
+    body: "The tin of Assam was crushed and half the leaves spilled in the box. I'd like a replacement or my money back."
+    open_orders: 1
+    days_since_last_order: 3
+  expect:
+    topic: { choice: refund }
+    refund_request: { p_min: 0.7 }
+    band: human_queue
+
+- set: triage
+  note: Complaint without an ask; refund_request should stay low
+  state:
+    subject: "Not a fan"
+    body: "Tried the smoky oolong. Not for me, too strong. Anything milder you'd suggest?"
+    open_orders: 0
+    days_since_last_order: 20
+  expect:
+    topic: { choice: [product_question, other] }
+    refund_request: { p_max: 0.4 }
+    band: [auto_draft, human_queue]
+
+- set: triage
+  note: Abuse aimed at staff is paged regardless of topic
+  state:
+    subject: "Last warning"
+    body: "Third email about my late order. If this isn't fixed today I'll make sure everyone who works there regrets it."
+    open_orders: 1
+    days_since_last_order: 14
+  expect:
+    hostile: { p_min: 0.6 }
+    band: human_now
+
+- set: triage
+  note: Wholesale inquiry is queued for a person, not drafted
+  state:
+    subject: "Tea for our cafe"
+    body: "We're opening a small cafe in March and want to stock three or four of your loose teas. Do you offer wholesale pricing?"
+    open_orders: 0
+    days_since_last_order: 400
+  expect:
+    topic: { choice: wholesale }
+    urgency: { level: [0, 1] }
+    band: human_queue
+
+- set: order-match
+  note: Customer names the product, so only one order matches
+  state:
+    subject: "Question about my chai"
+    body: "The masala chai I just got tastes different from last time. Is it a new blend?"
+  params:
+    orders:
+      - { id: "a1042", placed_on: "2026-01-02", items: "Masala chai 100g" }
+      - { id: "a0977", placed_on: "2025-11-18", items: "Jasmine green sampler, glass teapot" }
+  expect:
+    is_about.a1042: { p_min: 0.8 }
+    is_about.a0977: { p_max: 0.3 }

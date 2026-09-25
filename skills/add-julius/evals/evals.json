@@ -1,0 +1,35 @@
+{
+  "skill_name": "add-julius",
+  "evals": [
+    {
+      "id": 1,
+      "name": "forum-mod-mixed-candidates",
+      "prompt": "can you add julius to my forum moderation thing? the abuse filter is a mess of blocklist exceptions and the category regexes miss half the posts. files are in forum-mod/",
+      "expected_output": "Keeps the abuse check (yesno; failure handling holds the post or is flagged as a decision for the user) and category (choice with an other/general option). Rejects the length and link limits (code) and the moderator summary (LLM), each with a one-line reason. Writes forum-mod/JULIUS.md and julius.examples.yaml that pass validate.py, with state rules that exclude author identity, a failure table for all four statuses, and model/budget left as named placeholders unless given.",
+      "files": [
+        "files/forum-mod/README.md",
+        "files/forum-mod/moderate.py"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "invoice-tool-nothing-fits",
+      "prompt": "I want to use Julius in invoice-tool/ for the overdue and reminder logic and maybe the tax part. Set it up.",
+      "expected_output": "Screens every candidate (tax, due date, overdue, duplicate number, reminders) and finds they're all deterministic, so it writes no JULIUS.md. Explains in plain terms that these belong in code, and says what kind of decision would be a fit if one comes up.",
+      "files": [
+        "files/invoice-tool/README.md",
+        "files/invoice-tool/invoice.py"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "support-inbox-update",
+      "prompt": "In support-inbox/JULIUS.md, lower the refund threshold to 0.5, and add a question for whether the customer wants to cancel their subscription. Cancellations should go to a person.",
+      "expected_output": "Changes the refund rule to 0.5, adds a yesno cancellation question and routes it to human_queue in the bands, updates the acting-on-answers table, and adds golden examples for the new question. Explains that the new question changes the triage set_hash while the threshold change alone would not, adds a change-log row with the new hash from validate.py, and leaves order-match's hash unchanged.",
+      "files": [
+        "files/support-inbox/JULIUS.md",
+        "files/support-inbox/julius.examples.yaml"
+      ]
+    }
+  ]
+}
