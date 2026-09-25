@@ -108,6 +108,8 @@ HTTP status codes are not checked. The envelope is the source of truth.
 
 [`core/test/conformance.test.mjs`](../core/test/conformance.test.mjs) runs the suite against the TypeScript core with in-memory ports. The core also exports `runConformanceCase`, `createMockProvider`, and `matchExpected`, so a decider built on it only has to supply a `ConformanceHarness`: a function that builds a fresh decider with its own ports, plus a way to load entry files.
 
+The installed `julius-core` package includes `conformance/cases/` and `conformance/entries/`, so a decider's own tests can run the suite straight from its dependencies (resolve `julius-core/package.json` and read the folder next to it).
+
 ## Notes for suite maintainers
 
 - The fixtures are the source of truth; edit them directly.

@@ -20,3 +20,13 @@ test("worked example hashes match the recorded values", async () => {
 test("canonical JSON sorts keys and keeps non-ASCII", () => {
   assert.equal(canonicalJson({ b: 1, a: ["é", { d: true, c: null }] }), '{"a":["é",{"c":null,"d":true}],"b":1}');
 });
+
+test("provider limits on score levels and choice options give set_too_large", async () => {
+  const base = { julius: "0.1", entry: "lim", access: "private", model: "m", log: "answers", budget: { daily_usd: 1 } };
+  const levels = await compileEntry({ ...base, sets: { s: { u: { type: "score", instructions: "x", levels: ["a", "b", "c"] } } } }, { maxQuestions: 5, maxScoreLevels: 2 });
+  assert.equal(levels.ok, false); assert.equal(levels.reason, "set_too_large");
+  const opts = await compileEntry({ ...base, sets: { s: { c: { type: "choice", instructions: "x", options: ["a", "b", "c"] } } } }, { maxQuestions: 5, maxChoiceOptions: 2 });
+  assert.equal(opts.ok, false); assert.equal(opts.reason, "set_too_large");
+  const fine = await compileEntry({ ...base, sets: { s: { u: { type: "score", instructions: "x", levels: ["a", "b"] } } } }, { maxQuestions: 5, maxScoreLevels: 2 });
+  assert.equal(fine.ok, true);
+});

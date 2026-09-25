@@ -114,6 +114,10 @@ export async function compileEntry(raw: unknown, limits?: Partial<ProviderLimits
       if (t === "score") {
         const lv = q.levels;
         if (!Array.isArray(lv) || lv.length < 2 || !lv.every((x) => typeof x === "string")) errors.push(`${qw}: levels must be a list of at least 2 strings, lowest first`);
+        else if (limits?.maxScoreLevels !== undefined && lv.length > limits.maxScoreLevels) {
+          tooLarge = true;
+          errors.push(`${qw}: ${lv.length} levels exceeds the provider limit of ${limits.maxScoreLevels}`);
+        }
       }
       if (t === "yesno") for (const k of ["if_true", "if_false"]) if (k in q && typeof q[k] !== "string") errors.push(`${qw}: ${k} must be a string`);
       if ("each" in q && (typeof q.each !== "string" || !QID.test(q.each))) errors.push(`${qw}: each must name a params list`);
@@ -143,7 +147,8 @@ export async function compileEntry(raw: unknown, limits?: Partial<ProviderLimits
     set.bands = { rules, default: typeof def === "string" ? def : null };
   }
 
-  if (errors.length) return fail(tooLarge && errors.every((x) => x.includes("exceeds the provider limit")) ? "set_too_large" : "invalid_entry");
+  const overLimit = errors.filter((x) => x.includes("exceeds the provider limit"));
+  if (errors.length) return fail(overLimit.length > 0 && overLimit.length === errors.length ? "set_too_large" : "invalid_entry");
   const b = budget as Record<string, unknown>;
   return {
     ok: true,

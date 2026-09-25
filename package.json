@@ -1,6 +1,6 @@
 {
   "name": "julius-core",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Provider-agnostic core for Julius deciders: entry validation, each expansion, bands, normalization, set_hash, envelopes, and the request pipeline.",
   "license": "MIT",
   "type": "module",
@@ -10,10 +10,15 @@
     ".": {
       "types": "./core/dist/index.d.ts",
       "import": "./core/dist/index.js"
-    }
+    },
+    "./package.json": "./package.json",
+    "./conformance/*": "./conformance/*"
   },
   "files": [
-    "core/dist"
+    "core/dist",
+    "conformance/cases",
+    "conformance/entries",
+    "conformance/README.md"
   ],
   "sideEffects": false,
   "engines": {

@@ -145,6 +145,7 @@ export class ProviderError extends Error {
 export interface ProviderLimits {
   maxQuestions: number;
   maxChoiceOptions?: number;
+  maxScoreLevels?: number;
   maxStateChars: number;
 }
 
