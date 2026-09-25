@@ -131,7 +131,7 @@ How an entry reaches a decider (uploaded, read from the project's repo, submitte
 
 - Spend is the cost the provider reports for each call, summed per entry per UTC day.
 - Before each provider call, the decider checks the entry's spend for the day. Once it has reached `daily_usd`, the call is refused with `over_budget` / `entry_budget`. A single call may take spend past the limit; the next one is refused.
-- `per_ip_per_min` counts requests per client IP in any 60-second window. A batch counts as one request.
+- `per_ip_per_min` counts requests per client IP per minute, in fixed one-minute windows or a sliding 60-second window (the decider's choice). A batch counts as one request.
 
 ## 5. Bands
 

@@ -38,6 +38,7 @@ For each case, the harness builds a fresh decider with:
    - `killed`: entry slugs switched off
    - `spent_usd`: `{ slug: amount }` already spent today
 4. **One fixed clock.** All steps in a case happen within the same minute and the same UTC day.
+5. **Batch items one at a time.** Budget cases expect items to be checked in order, so run batches with a concurrency of 1 under the harness.
 
 Then it runs the steps in order, against the same decider instance.
 
@@ -102,6 +103,10 @@ The mock stands in for a provider adapter, so the core's behavior can be tested 
 - **`log`**: the rows the decider logged during the step, subset-matched in order. Rows expose `entry`, `set`, `set_hash`, `status`, `reason`, `request_id`, and, when the entry's `log` setting keeps them, `answers` and `state`.
 
 HTTP status codes are not checked. The envelope is the source of truth.
+
+## Reference harness
+
+[`core/test/conformance.test.mjs`](../core/test/conformance.test.mjs) runs the suite against the TypeScript core with in-memory ports. The core also exports `runConformanceCase`, `createMockProvider`, and `matchExpected`, so a decider built on it only has to supply a `ConformanceHarness`: a function that builds a fresh decider with its own ports, plus a way to load entry files.
 
 ## Notes for suite maintainers
 

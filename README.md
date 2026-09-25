@@ -107,6 +107,45 @@ python3 skills/add-julius/scripts/validate.py path/to/JULIUS.md
 
 The [conformance suite](conformance/) turns that checklist into test cases: requests, scripted replies from a mock provider, and the expected envelopes, logs, and provider calls. Write a small harness for your decider, run the cases, and fix what fails.
 
+### Julius core (TypeScript)
+
+[`core/`](core/) is a provider-agnostic core that passes the full conformance suite. A decider supplies provider adapters and storage ports; the core does the rest:
+
+- entry validation and compilation, `$shared`, `each` expansion
+- band parsing and evaluation, answer normalization, `set_hash`
+- envelopes, reason codes, and the check order, for single and batch requests
+
+It has no runtime dependencies and uses only web-standard APIs (Web Crypto, `TextEncoder`, `AbortController`), so it runs on Workers, Node 20+, Deno, and Bun. YAML parsing is left to the caller: the core takes parsed entries, and `extractJuliusBlock` pulls the block out of a `JULIUS.md`.
+
+Install it from a tagged release as a git dependency. The package builds itself on install:
+
+```
+npm install github:donliggett/julius#<tag>
+```
+
+```ts
+import { compileEntry, createDecider, createMemoryPorts } from "julius-core";
+
+const mem = createMemoryPorts();              // swap for your own storage ports
+const r = await compileEntry(parsedEntry, myProvider.limits);
+if (r.ok) mem.addEntry(r.entry);
+
+const decider = createDecider({ ports: mem.ports, providers: [myProvider] });
+const { status, body } = await decider.handle({
+  path: "/v1/decide",
+  headers: { authorization: "Bearer <key>" },
+  clientIp: "203.0.113.10",
+  body: { entry: "larkspur-support", set: "triage", state: { /* ... */ } },
+});
+```
+
+To run its tests from a clone:
+
+```
+npm install
+npm test
+```
+
 ## Known providers
 
 Models that return typed, calibrated decisions a decider adapter can map to Julius question types. This list is for discoverability; being on it isn't an endorsement.
@@ -134,6 +173,7 @@ Feedback is welcome in issues.
 | [`JULIUS.md`](JULIUS.md) | Entry template to copy into a project |
 | [`examples/`](examples/) | Worked examples |
 | [`conformance/`](conformance/) | Language-neutral test suite for deciders |
+| [`core/`](core/) | TypeScript decider core (`julius-core`) |
 | [`skills/add-julius/`](skills/add-julius/) | Agent skill that adds a Julius entry to a project (draft) |
 | [`tools/`](tools/) | Repo maintenance scripts |
 

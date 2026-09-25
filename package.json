@@ -1,0 +1,35 @@
+{
+  "name": "julius-core",
+  "version": "0.1.0",
+  "description": "Provider-agnostic core for Julius deciders: entry validation, each expansion, bands, normalization, set_hash, envelopes, and the request pipeline.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./core/dist/index.js",
+  "types": "./core/dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./core/dist/index.d.ts",
+      "import": "./core/dist/index.js"
+    }
+  },
+  "files": [
+    "core/dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p core/tsconfig.json",
+    "prepare": "npm run build",
+    "test": "npm run build && node --test \"core/test/*.test.mjs\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/donliggett/julius.git"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "yaml": "^2.9.1"
+  }
+}
