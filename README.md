@@ -123,6 +123,12 @@ Install it from a tagged release as a git dependency. The package builds itself 
 npm install github:donliggett/julius#<tag>
 ```
 
+npm 12 and later block git dependencies by default. Allow the ones your own `package.json` declares by adding this line to your project's `.npmrc`:
+
+```
+allow-git=root
+```
+
 ```ts
 import { compileEntry, createDecider, createMemoryPorts } from "julius-core";
 
