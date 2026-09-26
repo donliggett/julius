@@ -1,6 +1,6 @@
 {
   "name": "julius-core",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Provider-agnostic core for Julius deciders: entry validation, each expansion, bands, normalization, set_hash, envelopes, and the request pipeline.",
   "license": "MIT",
   "type": "module",

@@ -113,10 +113,10 @@ export function createDecider(config: { ports: Ports; providers: ProviderAdapter
   /** Steps 6-13 for one state (a single request or one batch item). */
   async function runOne(entry: CompiledEntry, set: CompiledSet, ctx: Ctx, state: unknown, params: unknown, itemId?: string): Promise<Record<string, unknown>> {
     const per = opt.entryOptions?.(entry.slug) ?? {};
-    const failWith = async (status: Status, reason: string, extra: Record<string, unknown> = {}) => {
+    const failWith = async (status: Status, reason: string, extra: Record<string, unknown> = {}, cost?: number) => {
       const env = base(ctx, status, reason, extra);
       env.entry = entry.slug; env.set = set.name;
-      await writeLog(entry, set, ctx, itemId, env, state);
+      await writeLog(entry, set, ctx, itemId, env, state, cost ? { cost } : {});
       return env;
     };
     const supporting = providers.filter((p) => p.supports(entry.model));
@@ -139,6 +139,13 @@ export function createDecider(config: { ports: Ports; providers: ProviderAdapter
     // 9. call providers in order
     const timeoutMs = per.timeoutMs ?? opt.timeoutMs ?? 10_000;
     let lastReason = "provider_error";
+    let billedOnFailure = 0;
+    // Spend counts whatever a provider billed, including calls that then fail or are refused.
+    const charge = async (usd: number) => {
+      if (!(usd > 0)) return;
+      await ports.spend.add(entry.slug, day, usd);
+      if (opt.globalDailyUsd !== undefined) await ports.spend.add("*", day, usd);
+    };
     for (const p of candidates) {
       const ac = new AbortController();
       let timer: ReturnType<typeof setTimeout> | undefined;
@@ -147,11 +154,13 @@ export function createDecider(config: { ports: Ports; providers: ProviderAdapter
           p.decide({ model: entry.model, state, questions, timeoutMs, signal: ac.signal }),
           new Promise<never>((_, reject) => { timer = setTimeout(() => { ac.abort(); reject(new ProviderError("timeout")); }, timeoutMs); }),
         ]);
-        // 10-11. normalize and band
-        const answers = normalizeAnswers(questions, res.answers);
         const cost = Number.isFinite(res.costUsd) ? res.costUsd : 0;
         await ports.spend.add(entry.slug, day, cost);
         if (opt.globalDailyUsd !== undefined) await ports.spend.add("*", day, cost);
+        // 10-11. normalize and band. A malformed answer was still billed, so spend is recorded first.
+        let answers;
+        try { answers = normalizeAnswers(questions, res.answers); }
+        catch (x) { billedOnFailure += cost; throw x; }
         const env: Record<string, unknown> = {
           status: "ok", julius: JULIUS_VERSION, entry: entry.slug, set: set.name, set_hash: set.setHash,
           provider: p.name, model: entry.model, calibrated: p.calibrated, answers,
@@ -163,6 +172,7 @@ export function createDecider(config: { ports: Ports; providers: ProviderAdapter
         await writeLog(entry, set, ctx, itemId, env, state, { cost, tokens: res.inputTokens });
         return env;
       } catch (x) {
+        if (x instanceof ProviderError && x.costUsd) { await charge(x.costUsd); billedOnFailure += x.costUsd; }
         if (x instanceof ProviderError) lastReason = PROVIDER_REASON[x.kind] ?? "provider_error";
         else if (x instanceof BadAnswer) lastReason = "provider_error";
         else lastReason = "provider_error";
@@ -170,7 +180,7 @@ export function createDecider(config: { ports: Ports; providers: ProviderAdapter
         if (timer) clearTimeout(timer);
       }
     }
-    return failWith("unavailable", lastReason);
+    return failWith("unavailable", lastReason, {}, billedOnFailure);
   }
 
   async function decide(req: HttpRequest): Promise<Envelope> {

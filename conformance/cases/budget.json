@@ -132,6 +132,184 @@
           }
         }
       ]
+    },
+    {
+      "id": "budget-counts-billed-failure",
+      "section": "4",
+      "description": "A call the provider billed and then failed still counts toward spend.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-budget"
+            },
+            "body": {
+              "entry": "conf-budget",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "responses": [
+            {
+              "error": "error",
+              "cost_usd": 0.5
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "unavailable",
+              "julius": "0.1",
+              "reason": "provider_error",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-budget",
+              "set": "check"
+            },
+            "provider_calls": 1
+          }
+        },
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-budget"
+            },
+            "body": {
+              "entry": "conf-budget",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "over_budget",
+              "julius": "0.1",
+              "reason": "entry_budget",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-budget",
+              "set": "check"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "budget-counts-billed-bad-answer",
+      "section": "4",
+      "description": "A billed reply the decider rejects (a question left unanswered) still counts toward spend.",
+      "steps": [
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-budget"
+            },
+            "body": {
+              "entry": "conf-budget",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "responses": [
+            {
+              "answers": {},
+              "cost_usd": 0.5
+            }
+          ],
+          "expect": {
+            "body": {
+              "status": "unavailable",
+              "julius": "0.1",
+              "reason": "provider_error",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-budget",
+              "set": "check"
+            },
+            "provider_calls": 1
+          }
+        },
+        {
+          "request": {
+            "path": "/v1/decide",
+            "client_ip": "203.0.113.10",
+            "headers": {
+              "Authorization": "Bearer k-conf-budget"
+            },
+            "body": {
+              "entry": "conf-budget",
+              "set": "check",
+              "state": {
+                "text": "I'd like my money back"
+              }
+            }
+          },
+          "expect": {
+            "body": {
+              "status": "over_budget",
+              "julius": "0.1",
+              "reason": "entry_budget",
+              "ms": {
+                "$type": "number"
+              },
+              "request_id": {
+                "$type": "string"
+              },
+              "answers": {
+                "$absent": true
+              },
+              "band": {
+                "$absent": true
+              },
+              "entry": "conf-budget",
+              "set": "check"
+            },
+            "provider_calls": 0
+          }
+        }
+      ]
     }
   ]
 }

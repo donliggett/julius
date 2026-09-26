@@ -135,10 +135,13 @@ export type ProviderErrorKind = "timeout" | "down" | "error" | "rate_limited";
 
 export class ProviderError extends Error {
   readonly kind: ProviderErrorKind;
-  constructor(kind: ProviderErrorKind, message?: string) {
+  /** What the provider billed for the failed call, when it billed one. Counted toward spend. */
+  readonly costUsd?: number;
+  constructor(kind: ProviderErrorKind, message?: string, costUsd?: number) {
     super(message ?? `provider ${kind}`);
     this.kind = kind;
     this.name = "ProviderError";
+    if (typeof costUsd === "number" && Number.isFinite(costUsd) && costUsd > 0) this.costUsd = costUsd;
   }
 }
 

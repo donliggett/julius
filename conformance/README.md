@@ -54,7 +54,7 @@ The mock stands in for a provider adapter, so the core's behavior can be tested 
   `questions` lists the set's questions in entry order. Each has `id`, `type`, `instructions`, and the type's fields (`options`, `levels`, `if_true`, `if_false`), with `$shared` resolved. An `each` question appears once per item in params order, with id `<question>.<item id>` and placeholders filled in. `each` itself is not passed on.
 - **Scripted replies.** A step's `responses` are returned in order, one per call:
   - `{ "answers": { … }, "cost_usd": 0.01 }`. Answers are keyed by question id and contain only what a provider supplies: `p` for `yesno`, `probs` for `choice`, `score` for `score`, plus `confidence` when present. The decider derives `choice`, `level`, and `label` (section 7).
-  - `{ "error": "timeout" | "down" | "error" | "rate_limited" }`, mapped to `unavailable` with `provider_timeout`, `provider_down`, `provider_error`, or `provider_rate_limited`.
+  - `{ "error": "timeout" | "down" | "error" | "rate_limited", "cost_usd"?: 0.01 }`, mapped to `unavailable` with `provider_timeout`, `provider_down`, `provider_error`, or `provider_rate_limited`. A `cost_usd` on an error means the provider billed the failed call; it counts toward spend.
 - A call with no scripted reply left fails the case, and so does a scripted reply left unused.
 
 ## Case format

@@ -6,7 +6,7 @@
 import type { HttpRequest, LogRow, ProviderAdapter, RawAnswer } from "./types.js";
 import { ProviderError } from "./types.js";
 
-type Scripted = { answers: Record<string, RawAnswer>; cost_usd?: number } | { error: "timeout" | "down" | "error" | "rate_limited" };
+type Scripted = { answers: Record<string, RawAnswer>; cost_usd?: number } | { error: "timeout" | "down" | "error" | "rate_limited"; cost_usd?: number };
 
 /** The suite's mock provider (see conformance/README.md, "Mock provider contract"). */
 export function createMockProvider(overrides: { calibrated?: boolean; max_questions?: number; max_state_chars?: number } = {}) {
@@ -23,7 +23,7 @@ export function createMockProvider(overrides: { calibrated?: boolean; max_questi
       calls.push({ model, state, questions: questions.map((q) => ({ ...q })) });
       const r = queue.shift();
       if (!r) { unexpected++; throw new ProviderError("error", "unexpected provider call"); }
-      if ("error" in r) throw new ProviderError(r.error);
+      if ("error" in r) throw new ProviderError(r.error, undefined, r.cost_usd);
       return { answers: r.answers, costUsd: r.cost_usd ?? 0 };
     },
   };
